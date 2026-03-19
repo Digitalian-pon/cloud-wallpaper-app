@@ -7,6 +7,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.widget.*
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.digitalian.cloudwallpaper.databinding.ActivitySettingsBinding
 import kotlinx.coroutines.*
@@ -17,6 +18,16 @@ class SettingsActivity : AppCompatActivity() {
     private lateinit var prefs: WallpaperPrefs
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
 
+    // クラウド対応: 画像を複数選択（Google Drive/OneDrive/Dropbox対応）
+    private val imagePicker = registerForActivityResult(
+        ActivityResultContracts.OpenMultipleDocuments()
+    ) { uris: List<Uri> ->
+        if (uris.isNotEmpty()) {
+            onImagesSelected(uris)
+        }
+    }
+
+    // ローカルフォルダ選択（従来機能、ローカルのみ）
     private val folderPicker = registerForActivityResult(
         ActivityResultContracts.OpenDocumentTree()
     ) { uri: Uri? ->
@@ -39,9 +50,30 @@ class SettingsActivity : AppCompatActivity() {
     }
 
     private fun setupUI() {
-        // フォルダ選択
+        // クラウドから画像を選択（メイン機能）
+        binding.btnSelectImages.setOnClickListener {
+            imagePicker.launch(arrayOf("image/*"))
+        }
+
+        // ローカルフォルダ選択（サブ機能）
         binding.btnSelectFolder.setOnClickListener {
             folderPicker.launch(prefs.folderUri)
+        }
+
+        // 選択クリア
+        binding.btnClearImages.setOnClickListener {
+            AlertDialog.Builder(this)
+                .setTitle("画像をクリア")
+                .setMessage("選択した画像をすべて削除しますか？")
+                .setPositiveButton("クリア") { _, _ ->
+                    prefs.clearImageUris()
+                    prefs.folderUri = null
+                    prefs.folderName = ""
+                    prefs.currentIndex = 0
+                    updateImageDisplay()
+                }
+                .setNegativeButton("キャンセル", null)
+                .show()
         }
 
         // 切替間隔
@@ -144,10 +176,8 @@ class SettingsActivity : AppCompatActivity() {
     }
 
     private fun loadCurrentSettings() {
-        // フォルダ表示
-        updateFolderDisplay()
+        updateImageDisplay()
 
-        // 各Spinnerの初期位置設定
         val intervalIndex = when (prefs.intervalMs) {
             WallpaperPrefs.INTERVAL_1MIN -> 0
             WallpaperPrefs.INTERVAL_5MIN -> 1
@@ -189,8 +219,32 @@ class SettingsActivity : AppCompatActivity() {
             if (prefs.includeVideos) LinearLayout.VISIBLE else LinearLayout.GONE
     }
 
-    private fun onFolderSelected(uri: Uri) {
+    /** クラウドから画像を選択した時 */
+    private fun onImagesSelected(uris: List<Uri>) {
         // 永続的なアクセス権限を取得
+        for (uri in uris) {
+            try {
+                contentResolver.takePersistableUriPermission(
+                    uri,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION
+                )
+            } catch (_: Exception) {
+                // 一部のプロバイダーは永続権限非対応
+            }
+        }
+
+        prefs.addImageUris(uris)
+        updateImageDisplay()
+
+        Toast.makeText(
+            this,
+            "${uris.size}枚の画像を追加しました（合計: ${prefs.imageUris.size}枚）",
+            Toast.LENGTH_SHORT
+        ).show()
+    }
+
+    /** ローカルフォルダを選択した時 */
+    private fun onFolderSelected(uri: Uri) {
         contentResolver.takePersistableUriPermission(
             uri,
             Intent.FLAG_GRANT_READ_URI_PERMISSION
@@ -200,34 +254,42 @@ class SettingsActivity : AppCompatActivity() {
         prefs.folderName = uri.lastPathSegment ?: "Unknown"
         prefs.currentIndex = 0
 
-        updateFolderDisplay()
-        countImages(uri)
+        updateImageDisplay()
     }
 
-    private fun updateFolderDisplay() {
+    private fun updateImageDisplay() {
+        val cloudCount = prefs.imageUris.size
         val folderUri = prefs.folderUri
-        if (folderUri != null) {
-            binding.tvFolderPath.text = getString(R.string.selected_folder, prefs.folderName)
-            binding.tvFolderPath.visibility = TextView.VISIBLE
-            countImages(folderUri)
-        } else {
-            binding.tvFolderPath.text = getString(R.string.no_folder_selected)
-            binding.tvFolderPath.visibility = TextView.VISIBLE
-            binding.tvImageCount.visibility = TextView.GONE
-        }
-    }
 
-    private fun countImages(uri: Uri) {
-        scope.launch {
-            binding.tvImageCount.text = getString(R.string.loading)
-            binding.tvImageCount.visibility = TextView.VISIBLE
-
-            val count = withContext(Dispatchers.IO) {
-                val source = ImageSource(this@SettingsActivity)
-                source.listMedia(uri, prefs.includeVideos).size
+        if (cloudCount > 0 || folderUri != null) {
+            val parts = mutableListOf<String>()
+            if (cloudCount > 0) {
+                parts.add("クラウド/選択: ${cloudCount}枚")
             }
+            if (folderUri != null) {
+                parts.add("フォルダ: ${prefs.folderName}")
+            }
+            binding.tvImageCount.text = parts.joinToString(" + ")
+            binding.tvImageCount.visibility = TextView.VISIBLE
+            binding.btnClearImages.visibility = android.view.View.VISIBLE
 
-            binding.tvImageCount.text = getString(R.string.image_count, count)
+            // フォルダがある場合は中身もカウント
+            if (folderUri != null) {
+                scope.launch {
+                    val folderCount = withContext(Dispatchers.IO) {
+                        ImageSource(this@SettingsActivity)
+                            .listMedia(folderUri, prefs.includeVideos).size
+                    }
+                    val total = cloudCount + folderCount
+                    binding.tvImageCount.text = getString(R.string.image_count, total)
+                }
+            } else {
+                binding.tvImageCount.text = getString(R.string.image_count, cloudCount)
+            }
+        } else {
+            binding.tvImageCount.text = getString(R.string.no_folder_selected)
+            binding.tvImageCount.visibility = TextView.VISIBLE
+            binding.btnClearImages.visibility = android.view.View.GONE
         }
     }
 
@@ -246,7 +308,6 @@ class SettingsActivity : AppCompatActivity() {
         startActivity(intent)
     }
 
-    /** Spinner listener のボイラープレート削減 */
     abstract class SimpleSpinnerListener : android.widget.AdapterView.OnItemSelectedListener {
         abstract fun onSelected(position: Int)
         override fun onItemSelected(parent: android.widget.AdapterView<*>?, view: android.view.View?, position: Int, id: Long) {

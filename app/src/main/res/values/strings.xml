@@ -6,11 +6,14 @@
     <string name="settings_title">スライドショー設定</string>
 
     <string name="section_source">画像ソース</string>
-    <string name="select_folder">フォルダを選択</string>
-    <string name="select_folder_desc">Google Drive / OneDrive / Dropbox 等のフォルダを選択</string>
+    <string name="select_images">画像を選択（クラウド対応）</string>
+    <string name="select_images_desc">Google Drive / OneDrive / Dropbox / 端末内から複数選択可能。追加で選択すると既存リストに追加されます。</string>
+    <string name="select_folder">ローカルフォルダを選択</string>
+    <string name="select_folder_desc">端末内のフォルダを一括選択</string>
+    <string name="clear_images">選択をクリア</string>
     <string name="selected_folder">選択中: %s</string>
-    <string name="no_folder_selected">フォルダ未選択</string>
-    <string name="image_count">%d 枚の画像を検出</string>
+    <string name="no_folder_selected">画像が選択されていません</string>
+    <string name="image_count">%d 枚の画像</string>
 
     <string name="section_slideshow">スライドショー</string>
     <string name="interval">切替間隔</string>

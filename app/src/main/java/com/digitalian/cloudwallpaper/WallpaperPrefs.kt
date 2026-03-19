@@ -6,6 +6,7 @@ import android.net.Uri
 
 /**
  * スライドショー設定の管理
+ * 画像URIリストはJSON配列として保存
  */
 class WallpaperPrefs(context: Context) {
 
@@ -13,6 +14,7 @@ class WallpaperPrefs(context: Context) {
         context.getSharedPreferences("wallpaper_prefs", Context.MODE_PRIVATE)
 
     companion object {
+        private const val KEY_IMAGE_URIS = "image_uris"
         private const val KEY_FOLDER_URI = "folder_uri"
         private const val KEY_FOLDER_NAME = "folder_name"
         private const val KEY_INTERVAL_MS = "interval_ms"
@@ -25,7 +27,6 @@ class WallpaperPrefs(context: Context) {
         private const val KEY_CURRENT_INDEX = "current_index"
         private const val KEY_SHUFFLE_SEED = "shuffle_seed"
 
-        // 切替間隔（ミリ秒）
         const val INTERVAL_1MIN = 60_000L
         const val INTERVAL_5MIN = 300_000L
         const val INTERVAL_15MIN = 900_000L
@@ -34,19 +35,49 @@ class WallpaperPrefs(context: Context) {
         const val INTERVAL_3HOUR = 10_800_000L
         const val INTERVAL_6HOUR = 21_600_000L
 
-        // トランジション
         const val TRANSITION_FADE = "fade"
         const val TRANSITION_SLIDE = "slide"
         const val TRANSITION_NONE = "none"
 
-        // 表示順序
         const val ORDER_RANDOM = "random"
         const val ORDER_SEQUENTIAL = "sequential"
         const val ORDER_DATE_NEWEST = "date_newest"
 
-        // スケーリング
         const val SCALE_FILL = "fill"
         const val SCALE_FIT = "fit"
+    }
+
+    /** 個別選択した画像URIリスト（クラウド対応） */
+    var imageUris: List<Uri>
+        get() {
+            val raw = prefs.getString(KEY_IMAGE_URIS, "") ?: ""
+            if (raw.isEmpty()) return emptyList()
+            return raw.split("\n").filter { it.isNotEmpty() }.map { Uri.parse(it) }
+        }
+        set(value) {
+            prefs.edit().putString(
+                KEY_IMAGE_URIS,
+                value.joinToString("\n") { it.toString() }
+            ).apply()
+        }
+
+    fun addImageUris(newUris: List<Uri>) {
+        val current = imageUris.toMutableList()
+        val existing = current.map { it.toString() }.toSet()
+        for (uri in newUris) {
+            if (uri.toString() !in existing) {
+                current.add(uri)
+            }
+        }
+        imageUris = current
+    }
+
+    fun removeImageUri(uri: Uri) {
+        imageUris = imageUris.filter { it != uri }
+    }
+
+    fun clearImageUris() {
+        imageUris = emptyList()
     }
 
     var folderUri: Uri?

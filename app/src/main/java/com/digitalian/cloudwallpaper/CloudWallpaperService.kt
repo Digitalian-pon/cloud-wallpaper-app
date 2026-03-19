@@ -13,14 +13,12 @@ import kotlin.random.Random
 
 /**
  * ライブ壁紙サービス
- * クラウドストレージの画像をスライドショーで表示
+ * クラウドストレージ・ローカルの画像をスライドショーで表示
  */
 class CloudWallpaperService : WallpaperService() {
 
     companion object {
         private const val TAG = "CloudWallpaper"
-        // 外部から設定変更を通知するためのコールバック
-        var onSettingsChanged: (() -> Unit)? = null
     }
 
     override fun onCreateEngine(): Engine = SlideShowEngine()
@@ -31,23 +29,23 @@ class CloudWallpaperService : WallpaperService() {
         private val prefs by lazy { WallpaperPrefs(this@CloudWallpaperService) }
         private val imageSource by lazy { ImageSource(this@CloudWallpaperService) }
 
-        private var mediaItems: List<ImageSource.MediaItem> = emptyList()
+        private var imageUris: List<Uri> = emptyList()
         private var currentIndex = 0
         private var currentBitmap: Bitmap? = null
         private var nextBitmap: Bitmap? = null
-        private var transitionProgress = -1f  // -1 = not in transition
+        private var transitionProgress = -1f
         private var isVisible = false
         private var screenWidth = 0
         private var screenHeight = 0
 
-        private val transitionDuration = 1000L  // 1秒のフェード
-        private val transitionStepMs = 16L  // ~60fps
+        private val transitionDuration = 1000L
+        private val transitionStepMs = 16L
         private var transitionStartTime = 0L
 
         private val drawRunnable = object : Runnable {
             override fun run() {
                 if (!isVisible) return
-                drawFrame()
+                advanceToNext()
                 handler.postDelayed(this, prefs.intervalMs)
             }
         }
@@ -62,7 +60,6 @@ class CloudWallpaperService : WallpaperService() {
                 drawTransitionFrame()
 
                 if (transitionProgress >= 1f) {
-                    // トランジション完了
                     currentBitmap?.recycle()
                     currentBitmap = nextBitmap
                     nextBitmap = null
@@ -78,21 +75,27 @@ class CloudWallpaperService : WallpaperService() {
             super.onSurfaceChanged(holder, format, width, height)
             screenWidth = width
             screenHeight = height
-            loadMediaList()
-            if (mediaItems.isNotEmpty()) {
-                currentBitmap = loadBitmap(mediaItems[currentIndex].uri)
+            loadImageList()
+            if (imageUris.isNotEmpty()) {
+                currentBitmap = loadBitmap(imageUris[currentIndex])
                 drawCurrentFrame()
+            } else {
+                drawPlaceholder()
             }
         }
 
         override fun onVisibilityChanged(visible: Boolean) {
             isVisible = visible
             if (visible) {
-                loadMediaList()
-                if (currentBitmap == null && mediaItems.isNotEmpty()) {
-                    currentBitmap = loadBitmap(mediaItems[currentIndex].uri)
+                loadImageList()
+                if (currentBitmap == null && imageUris.isNotEmpty()) {
+                    currentBitmap = loadBitmap(imageUris[currentIndex])
                 }
-                drawCurrentFrame()
+                if (imageUris.isNotEmpty()) {
+                    drawCurrentFrame()
+                } else {
+                    drawPlaceholder()
+                }
                 scheduleNext()
             } else {
                 handler.removeCallbacks(drawRunnable)
@@ -111,36 +114,47 @@ class CloudWallpaperService : WallpaperService() {
             nextBitmap = null
         }
 
-        private fun loadMediaList() {
-            val folderUri = prefs.folderUri ?: return
+        /**
+         * 画像リストを構築:
+         * 1. 個別選択した画像URI（クラウド含む）
+         * 2. フォルダ内の画像（ローカル）
+         */
+        private fun loadImageList() {
             try {
-                mediaItems = imageSource.listMedia(folderUri, prefs.includeVideos)
-                    .filter { !it.isVideo }  // 壁紙サービスでは静止画のみ
+                val allUris = mutableListOf<Uri>()
 
-                mediaItems = when (prefs.order) {
-                    WallpaperPrefs.ORDER_RANDOM -> mediaItems.shuffled(Random(prefs.shuffleSeed))
-                    WallpaperPrefs.ORDER_DATE_NEWEST -> mediaItems.sortedByDescending { it.lastModified }
-                    else -> mediaItems.sortedBy { it.name }
+                // クラウド/個別選択の画像
+                allUris.addAll(prefs.imageUris)
+
+                // ローカルフォルダの画像
+                val folderUri = prefs.folderUri
+                if (folderUri != null) {
+                    val folderItems = imageSource.listMedia(folderUri, false)
+                    allUris.addAll(folderItems.map { it.uri })
                 }
 
-                currentIndex = prefs.currentIndex.coerceIn(0, max(0, mediaItems.size - 1))
-                Log.d(TAG, "Loaded ${mediaItems.size} images from folder")
+                // 並び替え
+                imageUris = when (prefs.order) {
+                    WallpaperPrefs.ORDER_RANDOM -> allUris.shuffled(Random(prefs.shuffleSeed))
+                    else -> allUris // 選択順 or そのまま
+                }
+
+                currentIndex = prefs.currentIndex.coerceIn(0, max(0, imageUris.size - 1))
+                Log.d(TAG, "Loaded ${imageUris.size} images (cloud: ${prefs.imageUris.size})")
             } catch (e: Exception) {
-                Log.e(TAG, "Failed to load media list", e)
+                Log.e(TAG, "Failed to load image list", e)
             }
         }
 
         private fun loadBitmap(uri: Uri): Bitmap? {
             return try {
-                val inputStream = contentResolver.openInputStream(uri) ?: return null
-
                 // まずサイズだけ取得
                 val options = BitmapFactory.Options().apply {
                     inJustDecodeBounds = true
                 }
-                val tempStream = contentResolver.openInputStream(uri)
-                BitmapFactory.decodeStream(tempStream, null, options)
-                tempStream?.close()
+                contentResolver.openInputStream(uri)?.use { stream ->
+                    BitmapFactory.decodeStream(stream, null, options)
+                }
 
                 // サンプルサイズ計算（メモリ節約）
                 options.inSampleSize = calculateInSampleSize(
@@ -149,12 +163,9 @@ class CloudWallpaperService : WallpaperService() {
                 )
                 options.inJustDecodeBounds = false
 
-                val stream = contentResolver.openInputStream(uri)
-                val bitmap = BitmapFactory.decodeStream(stream, null, options)
-                stream?.close()
-                inputStream.close()
-
-                bitmap
+                contentResolver.openInputStream(uri)?.use { stream ->
+                    BitmapFactory.decodeStream(stream, null, options)
+                }
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to load bitmap: $uri", e)
                 null
@@ -179,35 +190,28 @@ class CloudWallpaperService : WallpaperService() {
 
         private fun scheduleNext() {
             handler.removeCallbacks(drawRunnable)
-            if (mediaItems.isNotEmpty()) {
+            if (imageUris.isNotEmpty()) {
                 handler.postDelayed(drawRunnable, prefs.intervalMs)
             }
         }
 
-        /** 次の画像へ移行 */
-        private fun drawFrame() {
-            if (mediaItems.isEmpty()) {
+        private fun advanceToNext() {
+            if (imageUris.isEmpty()) {
                 drawPlaceholder()
                 return
             }
 
-            currentIndex = (currentIndex + 1) % mediaItems.size
+            currentIndex = (currentIndex + 1) % imageUris.size
             prefs.currentIndex = currentIndex
 
-            val newBitmap = loadBitmap(mediaItems[currentIndex].uri)
+            val newBitmap = loadBitmap(imageUris[currentIndex])
             if (newBitmap == null) {
-                // 読み込み失敗、次へスキップ
                 scheduleNext()
                 return
             }
 
             when (prefs.transition) {
-                WallpaperPrefs.TRANSITION_FADE -> {
-                    nextBitmap = newBitmap
-                    transitionStartTime = System.currentTimeMillis()
-                    transitionProgress = 0f
-                    handler.post(transitionRunnable)
-                }
+                WallpaperPrefs.TRANSITION_FADE,
                 WallpaperPrefs.TRANSITION_SLIDE -> {
                     nextBitmap = newBitmap
                     transitionStartTime = System.currentTimeMillis()
@@ -220,11 +224,8 @@ class CloudWallpaperService : WallpaperService() {
                     drawCurrentFrame()
                 }
             }
-
-            scheduleNext()
         }
 
-        /** 現在の画像を描画 */
         private fun drawCurrentFrame() {
             val holder = surfaceHolder
             var canvas: Canvas? = null
@@ -243,7 +244,6 @@ class CloudWallpaperService : WallpaperService() {
             }
         }
 
-        /** トランジション中のフレーム描画 */
         private fun drawTransitionFrame() {
             val holder = surfaceHolder
             var canvas: Canvas? = null
@@ -254,22 +254,18 @@ class CloudWallpaperService : WallpaperService() {
 
                     when (prefs.transition) {
                         WallpaperPrefs.TRANSITION_FADE -> {
-                            // 現在の画像（フェードアウト）
                             currentBitmap?.let {
                                 drawScaledBitmap(canvas, it, (255 * (1f - transitionProgress)).toInt())
                             }
-                            // 次の画像（フェードイン）
                             nextBitmap?.let {
                                 drawScaledBitmap(canvas, it, (255 * transitionProgress).toInt())
                             }
                         }
                         WallpaperPrefs.TRANSITION_SLIDE -> {
                             val offsetX = (-screenWidth * transitionProgress).toInt()
-                            // 現在の画像（左へスライドアウト）
                             currentBitmap?.let {
                                 drawScaledBitmap(canvas, it, 255, offsetX = offsetX)
                             }
-                            // 次の画像（右からスライドイン）
                             nextBitmap?.let {
                                 drawScaledBitmap(canvas, it, 255, offsetX = offsetX + screenWidth)
                             }
@@ -285,7 +281,6 @@ class CloudWallpaperService : WallpaperService() {
             }
         }
 
-        /** ビットマップをスケーリングして描画 */
         private fun drawScaledBitmap(
             canvas: Canvas,
             bitmap: Bitmap,
@@ -307,7 +302,6 @@ class CloudWallpaperService : WallpaperService() {
             val dstRect: Rect
 
             if (prefs.scaleMode == WallpaperPrefs.SCALE_FILL) {
-                // Center crop
                 val scale = max(sw / bw, sh / bh)
                 val scaledW = (sw / scale).toInt()
                 val scaledH = (sh / scale).toInt()
@@ -316,7 +310,6 @@ class CloudWallpaperService : WallpaperService() {
                 srcRect = Rect(x, y, x + scaledW, y + scaledH)
                 dstRect = Rect(offsetX, 0, offsetX + screenWidth, screenHeight)
             } else {
-                // Fit inside
                 val scale = min(sw / bw, sh / bh)
                 val dstW = (bw * scale).toInt()
                 val dstH = (bh * scale).toInt()
@@ -329,7 +322,6 @@ class CloudWallpaperService : WallpaperService() {
             canvas.drawBitmap(bitmap, srcRect, dstRect, paint)
         }
 
-        /** フォルダ未選択時のプレースホルダー */
         private fun drawPlaceholder() {
             val holder = surfaceHolder
             var canvas: Canvas? = null
@@ -354,7 +346,7 @@ class CloudWallpaperService : WallpaperService() {
                     paint.textSize = 32f
                     paint.color = Color.GRAY
                     canvas.drawText(
-                        "設定からフォルダを選択してください",
+                        "設定から画像を選択してください",
                         screenWidth / 2f,
                         screenHeight / 2f + 40,
                         paint
