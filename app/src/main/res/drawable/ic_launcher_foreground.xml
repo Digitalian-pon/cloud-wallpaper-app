@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Cloud -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M74,58H38c-5.5,0 -10,-4.5 -10,-10c0,-4.8 3.4,-8.8 8,-9.7C37.1,31.5 43,26 50,26c8.3,0 15,6.7 15,15h1c5,0 9,4 9,9s-4,8 -9,8z" />
+    <!-- Play/image symbol -->
+    <path
+        android:fillColor="#1565C0"
+        android:pathData="M46,38l16,10l-16,10z" />
+</vector>

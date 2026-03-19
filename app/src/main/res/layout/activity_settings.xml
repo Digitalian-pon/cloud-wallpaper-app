@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#121212">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp">
+
+        <!-- ヘッダー -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Cloud Wallpaper"
+            android:textColor="#FFFFFF"
+            android:textSize="28sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="4dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/wallpaper_description"
+            android:textColor="#AAAAAA"
+            android:textSize="14sp"
+            android:layout_marginBottom="24dp" />
+
+        <!-- ===== 画像ソース ===== -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/section_source"
+            android:textColor="#64B5F6"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="12dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnSelectFolder"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:text="@string/select_folder"
+            android:textSize="16sp"
+            style="@style/Widget.Material3.Button.OutlinedButton" />
+
+        <TextView
+            android:id="@+id/tvFolderPath"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#CCCCCC"
+            android:textSize="13sp"
+            android:layout_marginTop="8dp"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/tvImageCount"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#81C784"
+            android:textSize="13sp"
+            android:layout_marginTop="4dp"
+            android:visibility="gone" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/select_folder_desc"
+            android:textColor="#888888"
+            android:textSize="12sp"
+            android:layout_marginTop="4dp"
+            android:layout_marginBottom="24dp" />
+
+        <!-- ===== スライドショー設定 ===== -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/section_slideshow"
+            android:textColor="#64B5F6"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="12dp" />
+
+        <!-- 切替間隔 -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/interval"
+            android:textColor="#FFFFFF"
+            android:textSize="14sp"
+            android:layout_marginBottom="4dp" />
+
+        <Spinner
+            android:id="@+id/spinnerInterval"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:background="@drawable/spinner_bg"
+            android:layout_marginBottom="16dp" />
+
+        <!-- トランジション -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/transition"
+            android:textColor="#FFFFFF"
+            android:textSize="14sp"
+            android:layout_marginBottom="4dp" />
+
+        <Spinner
+            android:id="@+id/spinnerTransition"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:background="@drawable/spinner_bg"
+            android:layout_marginBottom="16dp" />
+
+        <!-- 表示順序 -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/order"
+            android:textColor="#FFFFFF"
+            android:textSize="14sp"
+            android:layout_marginBottom="4dp" />
+
+        <Spinner
+            android:id="@+id/spinnerOrder"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:background="@drawable/spinner_bg"
+            android:layout_marginBottom="24dp" />
+
+        <!-- ===== 表示設定 ===== -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/section_display"
+            android:textColor="#64B5F6"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="12dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/scale_mode"
+            android:textColor="#FFFFFF"
+            android:textSize="14sp"
+            android:layout_marginBottom="4dp" />
+
+        <Spinner
+            android:id="@+id/spinnerScale"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:background="@drawable/spinner_bg"
+            android:layout_marginBottom="24dp" />
+
+        <!-- ===== 動画設定 ===== -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/section_video"
+            android:textColor="#64B5F6"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="12dp" />
+
+        <com.google.android.material.switchmaterial.SwitchMaterial
+            android:id="@+id/switchVideo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/enable_video"
+            android:textColor="#FFFFFF"
+            android:layout_marginBottom="8dp" />
+
+        <LinearLayout
+            android:id="@+id/layoutVideoOptions"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingStart="16dp"
+            android:visibility="gone">
+
+            <com.google.android.material.switchmaterial.SwitchMaterial
+                android:id="@+id/switchMuteVideo"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/video_mute"
+                android:textColor="#CCCCCC"
+                android:layout_marginBottom="8dp" />
+
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="24dp" />
+
+        <!-- ===== アクションボタン ===== -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnSetWallpaper"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:text="@string/set_wallpaper"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnPreview"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:text="@string/preview"
+            android:textSize="14sp"
+            android:layout_marginTop="8dp"
+            style="@style/Widget.Material3.Button.TonalButton" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="32dp" />
+
+    </LinearLayout>
+</ScrollView>

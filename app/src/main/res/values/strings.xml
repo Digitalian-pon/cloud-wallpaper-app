@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Cloud Wallpaper</string>
+    <string name="wallpaper_name">Cloud Slideshow</string>
+    <string name="wallpaper_description">クラウドストレージの写真・動画をスライドショーで表示</string>
+    <string name="settings_title">スライドショー設定</string>
+
+    <string name="section_source">画像ソース</string>
+    <string name="select_folder">フォルダを選択</string>
+    <string name="select_folder_desc">Google Drive / OneDrive / Dropbox 等のフォルダを選択</string>
+    <string name="selected_folder">選択中: %s</string>
+    <string name="no_folder_selected">フォルダ未選択</string>
+    <string name="image_count">%d 枚の画像を検出</string>
+
+    <string name="section_slideshow">スライドショー</string>
+    <string name="interval">切替間隔</string>
+    <string name="interval_1min">1分</string>
+    <string name="interval_5min">5分</string>
+    <string name="interval_15min">15分</string>
+    <string name="interval_30min">30分</string>
+    <string name="interval_1hour">1時間</string>
+    <string name="interval_3hour">3時間</string>
+    <string name="interval_6hour">6時間</string>
+
+    <string name="transition">トランジション</string>
+    <string name="transition_fade">フェード</string>
+    <string name="transition_slide">スライド</string>
+    <string name="transition_none">なし</string>
+
+    <string name="order">表示順序</string>
+    <string name="order_random">ランダム</string>
+    <string name="order_sequential">順番通り</string>
+    <string name="order_date_newest">日付順（新しい順）</string>
+
+    <string name="section_display">表示設定</string>
+    <string name="scale_mode">スケーリング</string>
+    <string name="scale_fill">画面いっぱい（切り抜き）</string>
+    <string name="scale_fit">画面に収める（余白あり）</string>
+    <string name="bg_color">背景色</string>
+
+    <string name="section_target">適用先</string>
+    <string name="apply_homescreen">ホーム画面</string>
+    <string name="apply_lockscreen">ロック画面</string>
+    <string name="apply_both">両方</string>
+    <string name="set_wallpaper">壁紙に設定</string>
+
+    <string name="section_video">動画設定</string>
+    <string name="enable_video">動画も表示</string>
+    <string name="video_mute">動画をミュート</string>
+    <string name="video_duration">動画表示時間</string>
+    <string name="video_full">全編再生</string>
+    <string name="video_10s">10秒</string>
+    <string name="video_30s">30秒</string>
+
+    <string name="preview">プレビュー</string>
+    <string name="loading">読み込み中…</string>
+</resources>
