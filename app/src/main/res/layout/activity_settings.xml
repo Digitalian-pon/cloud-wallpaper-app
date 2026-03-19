@@ -29,6 +29,55 @@
             android:textSize="14sp"
             android:layout_marginBottom="24dp" />
 
+        <!-- ===== モード選択 ===== -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/section_modes"
+            android:textColor="#64B5F6"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="12dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnPhotoFrame"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:text="@string/start_photo_frame"
+            android:textSize="16sp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/photo_frame_desc"
+            android:textColor="#888888"
+            android:textSize="12sp"
+            android:layout_marginTop="4dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnInternetTv"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:text="@string/start_internet_tv"
+            android:textSize="16sp"
+            android:layout_marginTop="12dp"
+            style="@style/Widget.Material3.Button.TonalButton" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/internet_tv_desc"
+            android:textColor="#888888"
+            android:textSize="12sp"
+            android:layout_marginTop="4dp" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#333333"
+            android:layout_marginTop="20dp"
+            android:layout_marginBottom="20dp" />
+
         <!-- ===== 画像ソース ===== -->
         <TextView
             android:layout_width="wrap_content"

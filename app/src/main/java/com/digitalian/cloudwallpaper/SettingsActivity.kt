@@ -50,6 +50,16 @@ class SettingsActivity : AppCompatActivity() {
     }
 
     private fun setupUI() {
+        // フォトフレームモード
+        binding.btnPhotoFrame.setOnClickListener {
+            startActivity(Intent(this, PhotoFrameActivity::class.java))
+        }
+
+        // インターネットTVモード
+        binding.btnInternetTv.setOnClickListener {
+            startActivity(Intent(this, InternetTvActivity::class.java))
+        }
+
         // クラウドから画像を選択（メイン機能）
         binding.btnSelectImages.setOnClickListener {
             imagePicker.launch(arrayOf("image/*"))

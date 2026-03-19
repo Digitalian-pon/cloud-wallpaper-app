@@ -2,9 +2,17 @@
 <resources>
     <string name="app_name">Cloud Wallpaper</string>
     <string name="wallpaper_name">Cloud Slideshow</string>
-    <string name="wallpaper_description">クラウドストレージの写真・動画をスライドショーで表示</string>
-    <string name="settings_title">スライドショー設定</string>
+    <string name="wallpaper_description">フォトフレーム / インターネットTV / 壁紙スライドショー</string>
+    <string name="settings_title">Cloud Wallpaper</string>
 
+    <!-- モード選択 -->
+    <string name="section_modes">モード選択</string>
+    <string name="start_photo_frame">フォトフレームを開始</string>
+    <string name="photo_frame_desc">画面常時ON + フルスクリーンスライドショー。デジタルフォトフレームとして使えます。</string>
+    <string name="start_internet_tv">インターネットTVを開始</string>
+    <string name="internet_tv_desc">YouTube / AbemaTV / TVer 等をフルスクリーンで視聴。</string>
+
+    <!-- 画像ソース -->
     <string name="section_source">画像ソース</string>
     <string name="select_images">画像を選択（クラウド対応）</string>
     <string name="select_images_desc">Google Drive / OneDrive / Dropbox / 端末内から複数選択可能。追加で選択すると既存リストに追加されます。</string>
@@ -15,6 +23,7 @@
     <string name="no_folder_selected">画像が選択されていません</string>
     <string name="image_count">%d 枚の画像</string>
 
+    <!-- スライドショー -->
     <string name="section_slideshow">スライドショー</string>
     <string name="interval">切替間隔</string>
     <string name="interval_1min">1分</string>
@@ -35,18 +44,21 @@
     <string name="order_sequential">順番通り</string>
     <string name="order_date_newest">日付順（新しい順）</string>
 
+    <!-- 表示設定 -->
     <string name="section_display">表示設定</string>
     <string name="scale_mode">スケーリング</string>
     <string name="scale_fill">画面いっぱい（切り抜き）</string>
     <string name="scale_fit">画面に収める（余白あり）</string>
     <string name="bg_color">背景色</string>
 
+    <!-- 壁紙 -->
     <string name="section_target">適用先</string>
     <string name="apply_homescreen">ホーム画面</string>
     <string name="apply_lockscreen">ロック画面</string>
     <string name="apply_both">両方</string>
-    <string name="set_wallpaper">壁紙に設定</string>
+    <string name="set_wallpaper">ライブ壁紙に設定</string>
 
+    <!-- 動画設定 -->
     <string name="section_video">動画設定</string>
     <string name="enable_video">動画も表示</string>
     <string name="video_mute">動画をミュート</string>
@@ -57,4 +69,11 @@
 
     <string name="preview">プレビュー</string>
     <string name="loading">読み込み中…</string>
+
+    <!-- フォトフレーム -->
+    <string name="photo_frame_hint">タップ: 時計表示 / ダブルタップ: 終了 / スワイプ: 前後の画像</string>
+
+    <!-- インターネットTV -->
+    <string name="back">戻る</string>
+    <string name="channels">チャンネル</string>
 </resources>

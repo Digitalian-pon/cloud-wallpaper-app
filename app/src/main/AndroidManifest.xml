@@ -8,7 +8,7 @@
 
     <uses-feature
         android:name="android.software.live_wallpaper"
-        android:required="true" />
+        android:required="false" />
 
     <application
         android:name=".CloudWallpaperApp"
@@ -49,6 +49,23 @@
             android:name=".FolderPickerActivity"
             android:exported="false"
             android:theme="@style/Theme.CloudWallpaper" />
+
+        <!-- Photo Frame Mode (fullscreen slideshow, screen always on) -->
+        <activity
+            android:name=".PhotoFrameActivity"
+            android:exported="false"
+            android:theme="@style/Theme.CloudWallpaper.Fullscreen"
+            android:screenOrientation="unspecified"
+            android:configChanges="orientation|screenSize|keyboardHidden" />
+
+        <!-- Internet TV Mode (fullscreen WebView) -->
+        <activity
+            android:name=".InternetTvActivity"
+            android:exported="false"
+            android:theme="@style/Theme.CloudWallpaper.Fullscreen"
+            android:screenOrientation="unspecified"
+            android:configChanges="orientation|screenSize|keyboardHidden"
+            android:hardwareAccelerated="true" />
 
     </application>
 

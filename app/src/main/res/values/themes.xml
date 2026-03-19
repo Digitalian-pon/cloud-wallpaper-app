@@ -6,4 +6,11 @@
         <item name="colorOnPrimary">@color/on_primary</item>
         <item name="colorSecondary">@color/secondary</item>
     </style>
+
+    <style name="Theme.CloudWallpaper.Fullscreen" parent="Theme.CloudWallpaper">
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowActionBar">false</item>
+        <item name="android:windowContentOverlay">@null</item>
+    </style>
 </resources>
