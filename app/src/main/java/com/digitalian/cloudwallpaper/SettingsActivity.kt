@@ -1,7 +1,5 @@
 package com.digitalian.cloudwallpaper
 
-import android.app.WallpaperManager
-import android.content.ComponentName
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -18,16 +16,12 @@ class SettingsActivity : AppCompatActivity() {
     private lateinit var prefs: WallpaperPrefs
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
 
-    // クラウド対応: 画像を複数選択（Google Drive/OneDrive/Dropbox対応）
     private val imagePicker = registerForActivityResult(
         ActivityResultContracts.OpenMultipleDocuments()
     ) { uris: List<Uri> ->
-        if (uris.isNotEmpty()) {
-            onImagesSelected(uris)
-        }
+        if (uris.isNotEmpty()) onImagesSelected(uris)
     }
 
-    // ローカルフォルダ選択（従来機能、ローカルのみ）
     private val folderPicker = registerForActivityResult(
         ActivityResultContracts.OpenDocumentTree()
     ) { uri: Uri? ->
@@ -44,33 +38,26 @@ class SettingsActivity : AppCompatActivity() {
         loadCurrentSettings()
     }
 
+    override fun onResume() {
+        super.onResume()
+        updateWallpaperStatus()
+    }
+
     override fun onDestroy() {
         super.onDestroy()
         scope.cancel()
     }
 
     private fun setupUI() {
-        // フォトフレームモード
-        binding.btnPhotoFrame.setOnClickListener {
-            startActivity(Intent(this, PhotoFrameActivity::class.java))
-        }
-
-        // インターネットTVモード
-        binding.btnInternetTv.setOnClickListener {
-            startActivity(Intent(this, InternetTvActivity::class.java))
-        }
-
-        // クラウドから画像を選択（メイン機能）
+        // STEP 1: 画像選択
         binding.btnSelectImages.setOnClickListener {
             imagePicker.launch(arrayOf("image/*"))
         }
 
-        // ローカルフォルダ選択（サブ機能）
         binding.btnSelectFolder.setOnClickListener {
             folderPicker.launch(prefs.folderUri)
         }
 
-        // 選択クリア
         binding.btnClearImages.setOnClickListener {
             AlertDialog.Builder(this)
                 .setTitle("画像をクリア")
@@ -86,43 +73,26 @@ class SettingsActivity : AppCompatActivity() {
                 .show()
         }
 
+        // STEP 2: 壁紙スライドショー ON/OFF
+        binding.btnToggleWallpaper.setOnClickListener {
+            toggleWallpaperSlideshow()
+        }
+
         // 切替間隔
         val intervals = listOf(
-            WallpaperPrefs.INTERVAL_1MIN to getString(R.string.interval_1min),
-            WallpaperPrefs.INTERVAL_5MIN to getString(R.string.interval_5min),
             WallpaperPrefs.INTERVAL_15MIN to getString(R.string.interval_15min),
             WallpaperPrefs.INTERVAL_30MIN to getString(R.string.interval_30min),
             WallpaperPrefs.INTERVAL_1HOUR to getString(R.string.interval_1hour),
             WallpaperPrefs.INTERVAL_3HOUR to getString(R.string.interval_3hour),
             WallpaperPrefs.INTERVAL_6HOUR to getString(R.string.interval_6hour),
         )
-        val intervalAdapter = ArrayAdapter(
-            this,
-            android.R.layout.simple_spinner_dropdown_item,
+        binding.spinnerInterval.adapter = ArrayAdapter(
+            this, android.R.layout.simple_spinner_dropdown_item,
             intervals.map { it.second }
         )
-        binding.spinnerInterval.adapter = intervalAdapter
         binding.spinnerInterval.onItemSelectedListener = object : SimpleSpinnerListener() {
             override fun onSelected(position: Int) {
                 prefs.intervalMs = intervals[position].first
-            }
-        }
-
-        // トランジション
-        val transitions = listOf(
-            WallpaperPrefs.TRANSITION_FADE to getString(R.string.transition_fade),
-            WallpaperPrefs.TRANSITION_SLIDE to getString(R.string.transition_slide),
-            WallpaperPrefs.TRANSITION_NONE to getString(R.string.transition_none),
-        )
-        val transAdapter = ArrayAdapter(
-            this,
-            android.R.layout.simple_spinner_dropdown_item,
-            transitions.map { it.second }
-        )
-        binding.spinnerTransition.adapter = transAdapter
-        binding.spinnerTransition.onItemSelectedListener = object : SimpleSpinnerListener() {
-            override fun onSelected(position: Int) {
-                prefs.transition = transitions[position].first
             }
         }
 
@@ -130,14 +100,11 @@ class SettingsActivity : AppCompatActivity() {
         val orders = listOf(
             WallpaperPrefs.ORDER_RANDOM to getString(R.string.order_random),
             WallpaperPrefs.ORDER_SEQUENTIAL to getString(R.string.order_sequential),
-            WallpaperPrefs.ORDER_DATE_NEWEST to getString(R.string.order_date_newest),
         )
-        val orderAdapter = ArrayAdapter(
-            this,
-            android.R.layout.simple_spinner_dropdown_item,
+        binding.spinnerOrder.adapter = ArrayAdapter(
+            this, android.R.layout.simple_spinner_dropdown_item,
             orders.map { it.second }
         )
-        binding.spinnerOrder.adapter = orderAdapter
         binding.spinnerOrder.onItemSelectedListener = object : SimpleSpinnerListener() {
             override fun onSelected(position: Int) {
                 prefs.order = orders[position].first
@@ -152,70 +119,48 @@ class SettingsActivity : AppCompatActivity() {
             WallpaperPrefs.SCALE_FILL to getString(R.string.scale_fill),
             WallpaperPrefs.SCALE_FIT to getString(R.string.scale_fit),
         )
-        val scaleAdapter = ArrayAdapter(
-            this,
-            android.R.layout.simple_spinner_dropdown_item,
+        binding.spinnerScale.adapter = ArrayAdapter(
+            this, android.R.layout.simple_spinner_dropdown_item,
             scales.map { it.second }
         )
-        binding.spinnerScale.adapter = scaleAdapter
         binding.spinnerScale.onItemSelectedListener = object : SimpleSpinnerListener() {
             override fun onSelected(position: Int) {
                 prefs.scaleMode = scales[position].first
             }
         }
 
-        // 動画設定
-        binding.switchVideo.setOnCheckedChangeListener { _, checked ->
-            prefs.includeVideos = checked
-            binding.layoutVideoOptions.visibility = if (checked) LinearLayout.VISIBLE else LinearLayout.GONE
+        // その他モード
+        binding.btnPhotoFrame.setOnClickListener {
+            startActivity(Intent(this, PhotoFrameActivity::class.java))
         }
-
-        binding.switchMuteVideo.setOnCheckedChangeListener { _, checked ->
-            prefs.muteVideos = checked
-        }
-
-        // 壁紙に設定ボタン
-        binding.btnSetWallpaper.setOnClickListener {
-            setAsWallpaper()
-        }
-
-        // プレビューボタン
-        binding.btnPreview.setOnClickListener {
-            previewWallpaper()
+        binding.btnInternetTv.setOnClickListener {
+            startActivity(Intent(this, InternetTvActivity::class.java))
         }
     }
 
     private fun loadCurrentSettings() {
         updateImageDisplay()
 
+        // 間隔
         val intervalIndex = when (prefs.intervalMs) {
-            WallpaperPrefs.INTERVAL_1MIN -> 0
-            WallpaperPrefs.INTERVAL_5MIN -> 1
-            WallpaperPrefs.INTERVAL_15MIN -> 2
-            WallpaperPrefs.INTERVAL_30MIN -> 3
-            WallpaperPrefs.INTERVAL_1HOUR -> 4
-            WallpaperPrefs.INTERVAL_3HOUR -> 5
-            WallpaperPrefs.INTERVAL_6HOUR -> 6
-            else -> 2
+            WallpaperPrefs.INTERVAL_15MIN -> 0
+            WallpaperPrefs.INTERVAL_30MIN -> 1
+            WallpaperPrefs.INTERVAL_1HOUR -> 2
+            WallpaperPrefs.INTERVAL_3HOUR -> 3
+            WallpaperPrefs.INTERVAL_6HOUR -> 4
+            else -> 0
         }
         binding.spinnerInterval.setSelection(intervalIndex)
 
-        val transIndex = when (prefs.transition) {
-            WallpaperPrefs.TRANSITION_FADE -> 0
-            WallpaperPrefs.TRANSITION_SLIDE -> 1
-            WallpaperPrefs.TRANSITION_NONE -> 2
-            else -> 0
-        }
-        binding.spinnerTransition.setSelection(transIndex)
-
+        // 順序
         val orderIndex = when (prefs.order) {
             WallpaperPrefs.ORDER_RANDOM -> 0
             WallpaperPrefs.ORDER_SEQUENTIAL -> 1
-            WallpaperPrefs.ORDER_DATE_NEWEST -> 2
             else -> 0
         }
         binding.spinnerOrder.setSelection(orderIndex)
 
+        // スケール
         val scaleIndex = when (prefs.scaleMode) {
             WallpaperPrefs.SCALE_FILL -> 0
             WallpaperPrefs.SCALE_FIT -> 1
@@ -223,24 +168,49 @@ class SettingsActivity : AppCompatActivity() {
         }
         binding.spinnerScale.setSelection(scaleIndex)
 
-        binding.switchVideo.isChecked = prefs.includeVideos
-        binding.switchMuteVideo.isChecked = prefs.muteVideos
-        binding.layoutVideoOptions.visibility =
-            if (prefs.includeVideos) LinearLayout.VISIBLE else LinearLayout.GONE
+        updateWallpaperStatus()
     }
 
-    /** クラウドから画像を選択した時 */
+    private fun toggleWallpaperSlideshow() {
+        if (WallpaperChangeWorker.isRunning(this)) {
+            // 停止
+            WallpaperChangeWorker.stop(this)
+            Toast.makeText(this, "壁紙スライドショーを停止しました", Toast.LENGTH_SHORT).show()
+        } else {
+            // 開始前に画像があるか確認
+            val count = prefs.imageUris.size
+            if (count == 0 && prefs.folderUri == null) {
+                Toast.makeText(this, "まず画像を選択してください", Toast.LENGTH_SHORT).show()
+                return
+            }
+
+            WallpaperChangeWorker.start(this, prefs.intervalMs)
+            Toast.makeText(this, "壁紙スライドショーを開始しました！", Toast.LENGTH_SHORT).show()
+        }
+        updateWallpaperStatus()
+    }
+
+    private fun updateWallpaperStatus() {
+        val running = WallpaperChangeWorker.isRunning(this)
+        if (running) {
+            binding.btnToggleWallpaper.text = getString(R.string.wallpaper_stop)
+            binding.btnToggleWallpaper.setBackgroundColor(getColor(R.color.stop_red))
+            binding.tvWallpaperStatus.text = getString(R.string.wallpaper_status_running)
+            binding.tvWallpaperStatus.setTextColor(getColor(R.color.status_green))
+        } else {
+            binding.btnToggleWallpaper.text = getString(R.string.wallpaper_start)
+            binding.tvWallpaperStatus.text = getString(R.string.wallpaper_status_stopped)
+            binding.tvWallpaperStatus.setTextColor(getColor(android.R.color.darker_gray))
+        }
+    }
+
     private fun onImagesSelected(uris: List<Uri>) {
-        // 永続的なアクセス権限を取得
         for (uri in uris) {
             try {
                 contentResolver.takePersistableUriPermission(
-                    uri,
-                    Intent.FLAG_GRANT_READ_URI_PERMISSION
+                    uri, Intent.FLAG_GRANT_READ_URI_PERMISSION
                 )
-            } catch (_: Exception) {
-                // 一部のプロバイダーは永続権限非対応
-            }
+            } catch (_: Exception) {}
         }
 
         prefs.addImageUris(uris)
@@ -248,22 +218,18 @@ class SettingsActivity : AppCompatActivity() {
 
         Toast.makeText(
             this,
-            "${uris.size}枚の画像を追加しました（合計: ${prefs.imageUris.size}枚）",
+            "${uris.size}枚追加（合計: ${prefs.imageUris.size}枚）",
             Toast.LENGTH_SHORT
         ).show()
     }
 
-    /** ローカルフォルダを選択した時 */
     private fun onFolderSelected(uri: Uri) {
         contentResolver.takePersistableUriPermission(
-            uri,
-            Intent.FLAG_GRANT_READ_URI_PERMISSION
+            uri, Intent.FLAG_GRANT_READ_URI_PERMISSION
         )
-
         prefs.folderUri = uri
         prefs.folderName = uri.lastPathSegment ?: "Unknown"
         prefs.currentIndex = 0
-
         updateImageDisplay()
     }
 
@@ -272,50 +238,24 @@ class SettingsActivity : AppCompatActivity() {
         val folderUri = prefs.folderUri
 
         if (cloudCount > 0 || folderUri != null) {
-            val parts = mutableListOf<String>()
-            if (cloudCount > 0) {
-                parts.add("クラウド/選択: ${cloudCount}枚")
-            }
-            if (folderUri != null) {
-                parts.add("フォルダ: ${prefs.folderName}")
-            }
-            binding.tvImageCount.text = parts.joinToString(" + ")
-            binding.tvImageCount.visibility = TextView.VISIBLE
-            binding.btnClearImages.visibility = android.view.View.VISIBLE
-
-            // フォルダがある場合は中身もカウント
             if (folderUri != null) {
                 scope.launch {
                     val folderCount = withContext(Dispatchers.IO) {
                         ImageSource(this@SettingsActivity)
-                            .listMedia(folderUri, prefs.includeVideos).size
+                            .listMedia(folderUri, false).size
                     }
-                    val total = cloudCount + folderCount
-                    binding.tvImageCount.text = getString(R.string.image_count, total)
+                    binding.tvImageCount.text = getString(R.string.image_count, cloudCount + folderCount)
                 }
             } else {
                 binding.tvImageCount.text = getString(R.string.image_count, cloudCount)
             }
+            binding.tvImageCount.visibility = TextView.VISIBLE
+            binding.btnClearImages.visibility = android.view.View.VISIBLE
         } else {
             binding.tvImageCount.text = getString(R.string.no_folder_selected)
             binding.tvImageCount.visibility = TextView.VISIBLE
             binding.btnClearImages.visibility = android.view.View.GONE
         }
-    }
-
-    private fun setAsWallpaper() {
-        val intent = Intent(WallpaperManager.ACTION_CHANGE_LIVE_WALLPAPER).apply {
-            putExtra(
-                WallpaperManager.EXTRA_LIVE_WALLPAPER_COMPONENT,
-                ComponentName(this@SettingsActivity, CloudWallpaperService::class.java)
-            )
-        }
-        startActivity(intent)
-    }
-
-    private fun previewWallpaper() {
-        val intent = Intent(WallpaperManager.ACTION_LIVE_WALLPAPER_CHOOSER)
-        startActivity(intent)
     }
 
     abstract class SimpleSpinnerListener : android.widget.AdapterView.OnItemSelectedListener {

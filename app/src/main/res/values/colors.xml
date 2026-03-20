@@ -6,4 +6,6 @@
     <color name="secondary">#5E35B1</color>
     <color name="background_dark">#121212</color>
     <color name="channel_chip_bg">#333333</color>
+    <color name="stop_red">#C62828</color>
+    <color name="status_green">#66BB6A</color>
 </resources>

@@ -51,11 +51,12 @@
     <string name="scale_fit">画面に収める（余白あり）</string>
     <string name="bg_color">背景色</string>
 
-    <!-- 壁紙 -->
-    <string name="section_target">適用先</string>
-    <string name="apply_homescreen">ホーム画面</string>
-    <string name="apply_lockscreen">ロック画面</string>
-    <string name="apply_both">両方</string>
+    <!-- 壁紙（簡単設定） -->
+    <string name="wallpaper_auto_desc">ボタンを押すだけ！ホーム画面とロック画面の壁紙が自動で切り替わります。</string>
+    <string name="wallpaper_start">壁紙スライドショー ON</string>
+    <string name="wallpaper_stop">壁紙スライドショー OFF</string>
+    <string name="wallpaper_status_running">実行中 - 壁紙が自動で切り替わっています</string>
+    <string name="wallpaper_status_stopped">停止中</string>
     <string name="set_wallpaper">ライブ壁紙に設定</string>
 
     <!-- 動画設定 -->
