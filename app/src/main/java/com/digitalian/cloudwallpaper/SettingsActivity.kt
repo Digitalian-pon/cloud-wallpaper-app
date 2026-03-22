@@ -80,6 +80,7 @@ class SettingsActivity : AppCompatActivity() {
 
         // 切替間隔
         val intervals = listOf(
+            WallpaperPrefs.INTERVAL_1MIN to getString(R.string.interval_1min),
             WallpaperPrefs.INTERVAL_15MIN to getString(R.string.interval_15min),
             WallpaperPrefs.INTERVAL_30MIN to getString(R.string.interval_30min),
             WallpaperPrefs.INTERVAL_1HOUR to getString(R.string.interval_1hour),
@@ -143,11 +144,12 @@ class SettingsActivity : AppCompatActivity() {
 
         // 間隔
         val intervalIndex = when (prefs.intervalMs) {
-            WallpaperPrefs.INTERVAL_15MIN -> 0
-            WallpaperPrefs.INTERVAL_30MIN -> 1
-            WallpaperPrefs.INTERVAL_1HOUR -> 2
-            WallpaperPrefs.INTERVAL_3HOUR -> 3
-            WallpaperPrefs.INTERVAL_6HOUR -> 4
+            WallpaperPrefs.INTERVAL_1MIN -> 0
+            WallpaperPrefs.INTERVAL_15MIN -> 1
+            WallpaperPrefs.INTERVAL_30MIN -> 2
+            WallpaperPrefs.INTERVAL_1HOUR -> 3
+            WallpaperPrefs.INTERVAL_3HOUR -> 4
+            WallpaperPrefs.INTERVAL_6HOUR -> 5
             else -> 0
         }
         binding.spinnerInterval.setSelection(intervalIndex)
