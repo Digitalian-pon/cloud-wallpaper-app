@@ -26,22 +26,26 @@ jobs:
         run: |
           gradle wrapper --gradle-version 8.5
 
-      - name: Build Debug APK
-        run: ./gradlew assembleDebug
-
-      - name: Upload Debug APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: cloud-wallpaper-debug
-          path: app/build/outputs/apk/debug/*.apk
-          retention-days: 30
+      - name: Decode Keystore
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > app/release.keystore
 
       - name: Build Release APK
         run: ./gradlew assembleRelease
 
-      - name: Upload Release APK
+      - name: Sign Release APK
+        run: |
+          apksigner sign \
+            --ks app/release.keystore \
+            --ks-key-alias ${{ secrets.KEY_ALIAS }} \
+            --ks-pass pass:${{ secrets.KEYSTORE_PASSWORD }} \
+            --key-pass pass:${{ secrets.KEY_PASSWORD }} \
+            app/build/outputs/apk/release/app-release-unsigned.apk
+          mv app/build/outputs/apk/release/app-release-unsigned.apk app/build/outputs/apk/release/cloud-wallpaper.apk
+
+      - name: Upload Signed APK
         uses: actions/upload-artifact@v4
         with:
-          name: cloud-wallpaper-release
-          path: app/build/outputs/apk/release/*.apk
+          name: cloud-wallpaper-signed
+          path: app/build/outputs/apk/release/cloud-wallpaper.apk
           retention-days: 30

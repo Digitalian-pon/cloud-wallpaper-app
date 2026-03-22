@@ -10,3 +10,5 @@
 *.apk
 *.ap_
 *.aab
+*.keystore
+*.jks
