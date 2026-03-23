@@ -35,7 +35,8 @@ jobs:
 
       - name: Sign Release APK
         run: |
-          apksigner sign \
+          BUILD_TOOLS=$(ls -d $ANDROID_HOME/build-tools/*/ | sort -V | tail -1)
+          ${BUILD_TOOLS}apksigner sign \
             --ks app/release.keystore \
             --ks-key-alias ${{ secrets.KEY_ALIAS }} \
             --ks-pass pass:${{ secrets.KEYSTORE_PASSWORD }} \
