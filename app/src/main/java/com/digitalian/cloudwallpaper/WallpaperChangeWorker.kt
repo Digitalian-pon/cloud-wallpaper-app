@@ -26,44 +26,55 @@ class WallpaperChangeWorker(
         private const val TAG = "WallpaperWorker"
         private const val WORK_NAME = "wallpaper_slideshow"
 
-        /** スライドショー開始 */
+        private const val SHORT_INTERVAL_THRESHOLD = 900_000L // 15分
+
+        /** スライドショー開始（短い間隔はForeground Service、15分以上はWorkManager） */
         fun start(context: Context, intervalMs: Long) {
-            // まず即座に1回壁紙を変更
-            val oneTimeRequest = OneTimeWorkRequestBuilder<WallpaperChangeWorker>()
-                .build()
-            WorkManager.getInstance(context)
-                .enqueue(oneTimeRequest)
+            if (intervalMs < SHORT_INTERVAL_THRESHOLD) {
+                // 短い間隔 → Foreground Service を使用
+                WorkManager.getInstance(context).cancelUniqueWork(WORK_NAME)
+                WallpaperSlideshowService.start(context)
+                Log.d(TAG, "Wallpaper slideshow started (Service): interval=${intervalMs / 1000}sec")
+            } else {
+                // 15分以上 → WorkManager を使用
+                WallpaperSlideshowService.stop(context)
 
-            // 定期実行を登録（最小15分）
-            val intervalMin = maxOf(15L, intervalMs / 60_000)
-            val periodicRequest = PeriodicWorkRequestBuilder<WallpaperChangeWorker>(
-                intervalMin, TimeUnit.MINUTES
-            )
-                .setConstraints(
-                    Constraints.Builder()
-                        .setRequiredNetworkType(NetworkType.NOT_REQUIRED)
-                        .build()
+                val oneTimeRequest = OneTimeWorkRequestBuilder<WallpaperChangeWorker>()
+                    .build()
+                WorkManager.getInstance(context).enqueue(oneTimeRequest)
+
+                val intervalMin = intervalMs / 60_000
+                val periodicRequest = PeriodicWorkRequestBuilder<WallpaperChangeWorker>(
+                    intervalMin, TimeUnit.MINUTES
                 )
-                .build()
+                    .setConstraints(
+                        Constraints.Builder()
+                            .setRequiredNetworkType(NetworkType.NOT_REQUIRED)
+                            .build()
+                    )
+                    .build()
 
-            WorkManager.getInstance(context)
-                .enqueueUniquePeriodicWork(
-                    WORK_NAME,
-                    ExistingPeriodicWorkPolicy.CANCEL_AND_REENQUEUE,
-                    periodicRequest
-                )
+                WorkManager.getInstance(context)
+                    .enqueueUniquePeriodicWork(
+                        WORK_NAME,
+                        ExistingPeriodicWorkPolicy.CANCEL_AND_REENQUEUE,
+                        periodicRequest
+                    )
 
-            Log.d(TAG, "Wallpaper slideshow started: interval=${intervalMin}min")
+                Log.d(TAG, "Wallpaper slideshow started (WorkManager): interval=${intervalMin}min")
+            }
         }
 
-        /** スライドショー停止 */
+        /** スライドショー停止（両方停止） */
         fun stop(context: Context) {
+            WallpaperSlideshowService.stop(context)
             WorkManager.getInstance(context).cancelUniqueWork(WORK_NAME)
             Log.d(TAG, "Wallpaper slideshow stopped")
         }
 
-        /** 実行中かチェック */
+        /** 実行中かチェック（Service または WorkManager） */
         fun isRunning(context: Context): Boolean {
+            if (WallpaperSlideshowService.isRunning(context)) return true
             val workInfos = WorkManager.getInstance(context)
                 .getWorkInfosForUniqueWork(WORK_NAME)
                 .get()

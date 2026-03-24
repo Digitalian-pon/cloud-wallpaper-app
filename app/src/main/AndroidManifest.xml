@@ -3,6 +3,8 @@
 
     <uses-permission android:name="android.permission.SET_WALLPAPER" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
@@ -57,6 +59,12 @@
             android:theme="@style/Theme.CloudWallpaper.Fullscreen"
             android:screenOrientation="unspecified"
             android:configChanges="orientation|screenSize|keyboardHidden" />
+
+        <!-- Wallpaper Slideshow Service (短い間隔用) -->
+        <service
+            android:name=".WallpaperSlideshowService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse" />
 
         <!-- Internet TV Mode (fullscreen WebView) -->
         <activity
