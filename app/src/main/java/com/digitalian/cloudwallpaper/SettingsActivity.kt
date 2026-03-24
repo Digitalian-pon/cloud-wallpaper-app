@@ -3,12 +3,14 @@ package com.digitalian.cloudwallpaper
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.os.Environment
 import android.widget.*
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.digitalian.cloudwallpaper.databinding.ActivitySettingsBinding
 import kotlinx.coroutines.*
+import java.io.File
 
 class SettingsActivity : AppCompatActivity() {
 
@@ -138,6 +140,10 @@ class SettingsActivity : AppCompatActivity() {
         binding.btnInternetTv.setOnClickListener {
             startActivity(Intent(this, InternetTvActivity::class.java))
         }
+
+        // バックアップ / リストア
+        binding.btnBackup.setOnClickListener { backupSettings() }
+        binding.btnRestore.setOnClickListener { restoreSettings() }
     }
 
     private fun loadCurrentSettings() {
@@ -260,6 +266,43 @@ class SettingsActivity : AppCompatActivity() {
             binding.tvImageCount.visibility = TextView.VISIBLE
             binding.btnClearImages.visibility = android.view.View.GONE
         }
+    }
+
+    private val backupFileName = "cloud-wallpaper-backup.json"
+
+    private fun backupSettings() {
+        try {
+            val downloadDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+            val file = File(downloadDir, backupFileName)
+            file.writeText(prefs.exportToJson())
+            Toast.makeText(this, "バックアップ完了: Download/$backupFileName", Toast.LENGTH_LONG).show()
+        } catch (e: Exception) {
+            Toast.makeText(this, "バックアップ失敗: ${e.message}", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    private fun restoreSettings() {
+        val downloadDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+        val file = File(downloadDir, backupFileName)
+        if (!file.exists()) {
+            Toast.makeText(this, "バックアップファイルが見つかりません\nDownload/$backupFileName", Toast.LENGTH_LONG).show()
+            return
+        }
+
+        AlertDialog.Builder(this)
+            .setTitle("リストア")
+            .setMessage("バックアップから設定を復元しますか？\n現在の設定は上書きされます。")
+            .setPositiveButton("リストア") { _, _ ->
+                try {
+                    prefs.importFromJson(file.readText())
+                    loadCurrentSettings()
+                    Toast.makeText(this, "リストア完了！", Toast.LENGTH_SHORT).show()
+                } catch (e: Exception) {
+                    Toast.makeText(this, "リストア失敗: ${e.message}", Toast.LENGTH_LONG).show()
+                }
+            }
+            .setNegativeButton("キャンセル", null)
+            .show()
     }
 
     abstract class SimpleSpinnerListener : android.widget.AdapterView.OnItemSelectedListener {

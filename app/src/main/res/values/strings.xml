@@ -77,4 +77,10 @@
     <!-- インターネットTV -->
     <string name="back">戻る</string>
     <string name="channels">チャンネル</string>
+
+    <!-- バックアップ / リストア -->
+    <string name="section_backup">バックアップ / リストア</string>
+    <string name="backup_desc">アプリの再インストール前に設定をバックアップ。Downloadフォルダに保存されます。</string>
+    <string name="backup">バックアップ</string>
+    <string name="restore">リストア</string>
 </resources>

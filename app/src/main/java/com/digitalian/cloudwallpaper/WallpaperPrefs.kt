@@ -3,6 +3,8 @@ package com.digitalian.cloudwallpaper
 import android.content.Context
 import android.content.SharedPreferences
 import android.net.Uri
+import org.json.JSONArray
+import org.json.JSONObject
 
 /**
  * スライドショー設定の管理
@@ -123,4 +125,54 @@ class WallpaperPrefs(context: Context) {
     var shuffleSeed: Long
         get() = prefs.getLong(KEY_SHUFFLE_SEED, System.currentTimeMillis())
         set(value) = prefs.edit().putLong(KEY_SHUFFLE_SEED, value).apply()
+
+    /** 全設定をJSONにエクスポート */
+    fun exportToJson(): String {
+        val json = JSONObject()
+        json.put(KEY_IMAGE_URIS, JSONArray(imageUris.map { it.toString() }))
+        json.put(KEY_FOLDER_URI, folderUri?.toString() ?: "")
+        json.put(KEY_FOLDER_NAME, folderName)
+        json.put(KEY_INTERVAL_MS, intervalMs)
+        json.put(KEY_TRANSITION, transition)
+        json.put(KEY_ORDER, order)
+        json.put(KEY_SCALE_MODE, scaleMode)
+        json.put(KEY_INCLUDE_VIDEOS, includeVideos)
+        json.put(KEY_MUTE_VIDEOS, muteVideos)
+        json.put(KEY_VIDEO_DURATION_SEC, videoDurationSec)
+        json.put(KEY_CURRENT_INDEX, currentIndex)
+        json.put(KEY_SHUFFLE_SEED, shuffleSeed)
+        return json.toString(2)
+    }
+
+    /** JSONから全設定をインポート */
+    fun importFromJson(jsonString: String) {
+        val json = JSONObject(jsonString)
+
+        // 画像URI
+        val uriArray = json.optJSONArray(KEY_IMAGE_URIS)
+        if (uriArray != null) {
+            val uris = mutableListOf<Uri>()
+            for (i in 0 until uriArray.length()) {
+                val s = uriArray.getString(i)
+                if (s.isNotEmpty()) uris.add(Uri.parse(s))
+            }
+            imageUris = uris
+        }
+
+        // フォルダURI
+        val folder = json.optString(KEY_FOLDER_URI, "")
+        folderUri = if (folder.isNotEmpty()) Uri.parse(folder) else null
+        folderName = json.optString(KEY_FOLDER_NAME, "")
+
+        // 設定値
+        intervalMs = json.optLong(KEY_INTERVAL_MS, INTERVAL_15MIN)
+        transition = json.optString(KEY_TRANSITION, TRANSITION_FADE)
+        order = json.optString(KEY_ORDER, ORDER_RANDOM)
+        scaleMode = json.optString(KEY_SCALE_MODE, SCALE_FILL)
+        includeVideos = json.optBoolean(KEY_INCLUDE_VIDEOS, false)
+        muteVideos = json.optBoolean(KEY_MUTE_VIDEOS, true)
+        videoDurationSec = json.optInt(KEY_VIDEO_DURATION_SEC, 10)
+        currentIndex = json.optInt(KEY_CURRENT_INDEX, 0)
+        shuffleSeed = json.optLong(KEY_SHUFFLE_SEED, System.currentTimeMillis())
+    }
 }
